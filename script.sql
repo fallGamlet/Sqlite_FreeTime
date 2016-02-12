@@ -22,26 +22,31 @@ values (8, 12),
 
 -- Create tamporary table
 drop table if exists temp.segment;
+
 create temporary table segment as
 select distinct * 
 from (
-select w.start as S, r.start E
-from worktime w, records r
+select w.start as S, r.start as E 
+from worktime w, records r 
+where (w.end - r.start)*(r.end - w.start) > 0
 UNION
-select r.end S, w.end E
+select r.end as S, w.end as E 
+from worktime w, records r 
+where (w.end - r.start)*(r.end - w.start) > 0
+UNION
+select w.start as S, w.end as E 
 from worktime w, records r
+where (w.end - r.start)*(r.end - w.start) <= 0
 )
-where s < e and 0 <=(w.end - r.start)*(r.end - w.start);
+where s < e;
+
+--select * from temp.segment;
 
 -- Select result sub intervals
 select distinct
-	max(t1.S, t2.S) as S1
-	,min(t1.E, t2.E) as E1
+	max(t1.S, t2.S) as S
+	,min(t1.E, t2.E) as E
 from temp.segment t1, temp.segment t2
-where t1.rowid <> t2.rowid 
-	and max(t1.S, t2.S) < min(t1.E, t2.E)
-	and 0 >= ( 
-		select MAX( (min(t1.E, t2.E) - r.start) * (r.end - max(t1.S, t2.S)) )
-		from main.records r
-		)
-order by S1, E1
+where max(t1.S, t2.S) < min(t1.E, t2.E)
+	and 0 >= ( select MAX( (min(t1.E, t2.E) - r.start) * (r.end - max(t1.S, t2.S)) )  from main.records r)
+order by S, E;
