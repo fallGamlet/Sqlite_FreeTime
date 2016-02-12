@@ -1,5 +1,27 @@
-drop table if exists temp.segment;
+-- Create Tables
+CREATE TABLE "worktime" (
+    "_id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "start" INTEGER NOT NULL,
+    "end" INTEGER NOT NULL
+);
 
+CREATE TABLE "records" (
+    "_id" INTEGER PRIMARY KEY AUTOINCREMENT,
+    "start" INTEGER NOT NULL,
+    "end" INTEGER NOT NULL
+);
+
+-- Insert values (init data)
+insert into worktime (start, end) 
+values (8, 48);
+
+insert into records (start, end)
+values (8, 12),
+	(24, 30),
+	(36,38);
+
+-- Create tamporary table
+drop table if exists temp.segment;
 create temporary table segment as
 select distinct * 
 from (
@@ -11,12 +33,8 @@ from worktime w, records r
 )
 where s < e and 0 <=(w.end - r.start)*(r.end - w.start);
 
-
---select rowid, S, E from temp.segment;
-
+-- Select result sub intervals
 select distinct
-	--t1.rowid as ID1
-	--,t2.rowid as ID2
 	max(t1.S, t2.S) as S1
 	,min(t1.E, t2.E) as E1
 from temp.segment t1, temp.segment t2
