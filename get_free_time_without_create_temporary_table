@@ -1,0 +1,26 @@
+select t.S, t.E
+from 
+(
+select r1.end as S, r2.start E
+from records r1, records r2, worktime w
+where r1.end < r2.start and r1.end > w.start and r2.start < w.end
+
+union
+
+select w.start S, r.start E
+from records r, worktime w
+where w.start < r.start and (w.end - r.start)*(r.end - w.start) > 0
+
+union
+
+select r.end S, w.end E
+from records r, worktime w
+where r.end< w.end and (w.end - r.start)*(r.end - w.start) > 0
+
+union
+
+select start S, end E
+from worktime
+) t
+
+where  0 >=  (select MAX((t.E - r.start)*(r.end - t.S)) from records r)
